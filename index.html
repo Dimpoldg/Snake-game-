@@ -2,33 +2,36 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Touch Snake Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fullscreen Snake Game</title>
 
 <style>
 body{
   margin:0;
-  text-align:center;
+  overflow:hidden;
   background:#0f2027;
-  color:white;
   font-family:Arial;
+  color:white;
+}
+
+#score{
+  position:absolute;
+  top:10px;
+  left:10px;
+  font-size:20px;
+  z-index:10;
 }
 
 canvas{
   display:block;
-  margin:auto;
-  background:#111;
-  border-radius:15px;
-  touch-action:none;
 }
 </style>
 </head>
 
 <body>
 
-<h2 id="score">Score: 0</h2>
-<button onclick="startGame()">Start Game</button>
-
-<canvas id="game" width="400" height="400"></canvas>
+<div id="score">Score: 0</div>
+<canvas id="game"></canvas>
 
 <script>
 const canvas = document.getElementById("game");
@@ -36,6 +39,16 @@ const ctx = canvas.getContext("2d");
 
 let snake, food, dir, gameInterval;
 let score = 0;
+let box = 20;
+let speed = 180;
+
+// fullscreen resize
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
 
 function startGame(){
   snake = [{x:200,y:200}];
@@ -44,13 +57,15 @@ function startGame(){
   spawnFood();
 
   clearInterval(gameInterval);
-  gameInterval = setInterval(gameLoop, 500);
+  gameInterval = setInterval(gameLoop, speed);
 }
+
+startGame();
 
 function spawnFood(){
   food = {
-    x: Math.floor(Math.random()*20)*20,
-    y: Math.floor(Math.random()*20)*20
+    x: Math.floor(canvas.width/box * Math.random()) * box,
+    y: Math.floor(canvas.height/box * Math.random()) * box
   };
 }
 
@@ -58,7 +73,7 @@ function gameLoop(){
   moveSnake();
   if(checkCollision()){
     alert("Game Over! Score: " + score);
-    clearInterval(gameInterval);
+    startGame();
     return;
   }
   drawGame();
@@ -67,10 +82,10 @@ function gameLoop(){
 function moveSnake(){
   let head = {...snake[0]};
 
-  if(dir==="LEFT") head.x -=20;
-  if(dir==="RIGHT") head.x +=20;
-  if(dir==="UP") head.y -=20;
-  if(dir==="DOWN") head.y +=20;
+  if(dir==="LEFT") head.x -=box;
+  if(dir==="RIGHT") head.x +=box;
+  if(dir==="UP") head.y -=box;
+  if(dir==="DOWN") head.y +=box;
 
   snake.unshift(head);
 
@@ -87,7 +102,7 @@ function moveSnake(){
 function checkCollision(){
   let head = snake[0];
 
-  if(head.x<0 || head.y<0 || head.x>=400 || head.y>=400){
+  if(head.x<0 || head.y<0 || head.x>=canvas.width || head.y>=canvas.height){
     return true;
   }
 
@@ -102,15 +117,33 @@ function checkCollision(){
 
 function drawGame(){
   ctx.fillStyle="#111";
-  ctx.fillRect(0,0,400,400);
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // snake
+  // snake (real look)
   snake.forEach((s,i)=>{
-    ctx.fillStyle = "lime";
+    let gradient = ctx.createRadialGradient(s.x+10,s.y+10,2,s.x+10,s.y+10,10);
+    gradient.addColorStop(0,"#66ff66");
+    gradient.addColorStop(1,"#006600");
+
+    ctx.fillStyle = gradient;
     ctx.beginPath();
     ctx.arc(s.x+10,s.y+10,10,0,Math.PI*2);
     ctx.fill();
   });
+
+  // eyes
+  let head = snake[0];
+  ctx.fillStyle="white";
+  ctx.beginPath();
+  ctx.arc(head.x+6,head.y+6,2,0,Math.PI*2);
+  ctx.arc(head.x+14,head.y+6,2,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle="black";
+  ctx.beginPath();
+  ctx.arc(head.x+6,head.y+6,1,0,Math.PI*2);
+  ctx.arc(head.x+14,head.y+6,1,0,Math.PI*2);
+  ctx.fill();
 
   // food
   ctx.fillStyle="red";
@@ -119,7 +152,7 @@ function drawGame(){
   ctx.fill();
 }
 
-// 🔥 TOUCH CONTROL
+// TOUCH CONTROL
 canvas.addEventListener("touchstart", function(e){
   let touch = e.touches[0];
   let rect = canvas.getBoundingClientRect();
@@ -129,7 +162,6 @@ canvas.addEventListener("touchstart", function(e){
 
   let head = snake[0];
 
-  // decide direction based on touch position
   let dx = touchX - (head.x+10);
   let dy = touchY - (head.y+10);
 
