@@ -24,16 +24,28 @@ canvas{
   border-radius:10px;
 }
 
-#score{
+#ui{
   margin-bottom:10px;
-  font-size:20px;
+}
+
+button{
+  padding:8px 15px;
+  font-size:16px;
+  border:none;
+  border-radius:5px;
+  background:#00ff00;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<div id="score">Score: 0</div>
+<div id="ui">
+  <div id="score">Score: 0</div>
+  <button onclick="startGame()">Start Game</button>
+</div>
+
 <canvas id="game"></canvas>
 
 <script>
@@ -43,7 +55,11 @@ const ctx = canvas.getContext("2d");
 canvas.width = 400;
 canvas.height = 400;
 
-let snake, food, dir, score = 0;
+let snake = [];
+let food;
+let dir = "";
+let score = 0;
+let gameLoop;
 let box = 20;
 
 function startGame(){
@@ -52,8 +68,8 @@ function startGame(){
   score = 0;
   spawnFood();
 
-  clearInterval(window.gameLoop);
-  window.gameLoop = setInterval(update, 150);
+  clearInterval(gameLoop);
+  gameLoop = setInterval(update, 220); // 🔥 SLOW SPEED
 }
 
 function spawnFood(){
@@ -73,7 +89,7 @@ function update(){
 
   snake.unshift(head);
 
-  if(head.x == food.x && head.y == food.y){
+  if(head.x==food.x && head.y==food.y){
     score++;
     spawnFood();
   }else{
@@ -81,16 +97,16 @@ function update(){
   }
 
   if(
-    head.x < 0 || head.y < 0 ||
-    head.x >= canvas.width ||
-    head.y >= canvas.height
+    head.x<0 || head.y<0 ||
+    head.x>=canvas.width ||
+    head.y>=canvas.height
   ){
     startGame();
     return;
   }
 
   for(let i=1;i<snake.length;i++){
-    if(head.x == snake[i].x && head.y == snake[i].y){
+    if(head.x==snake[i].x && head.y==snake[i].y){
       startGame();
       return;
     }
@@ -113,19 +129,29 @@ function draw(){
   ctx.fillRect(food.x,food.y,box,box);
 }
 
-// TOUCH CONTROL (simple)
+/* ✅ FIXED TOUCH (SWIPE CONTROL) */
+let startX, startY;
+
 document.addEventListener("touchstart", e=>{
-  let x = e.touches[0].clientX;
-  let y = e.touches[0].clientY;
-
-  if(x > window.innerWidth/2) dir="RIGHT";
-  else dir="LEFT";
-
-  if(y > window.innerHeight/2) dir="DOWN";
-  else dir="UP";
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
 });
 
-startGame();
+document.addEventListener("touchend", e=>{
+  let endX = e.changedTouches[0].clientX;
+  let endY = e.changedTouches[0].clientY;
+
+  let dx = endX - startX;
+  let dy = endY - startY;
+
+  if(Math.abs(dx) > Math.abs(dy)){
+    if(dx > 0 && dir!="LEFT") dir="RIGHT";
+    else if(dx < 0 && dir!="RIGHT") dir="LEFT";
+  }else{
+    if(dy > 0 && dir!="UP") dir="DOWN";
+    else if(dy < 0 && dir!="DOWN") dir="UP";
+  }
+});
 </script>
 
 </body>
