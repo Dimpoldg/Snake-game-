@@ -2,71 +2,44 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Colorful Snake Game</title>
+<title>Real Snake Game</title>
 
 <style>
 body{
   margin:0;
   font-family:Arial;
   text-align:center;
-  background:linear-gradient(135deg,#ff512f,#dd2476);
+  background:linear-gradient(135deg,#0f2027,#2c5364);
   color:white;
-}
-
-h1{
-  margin-top:10px;
 }
 
 canvas{
   display:block;
   margin:auto;
-  background:black;
-  border-radius:10px;
-  box-shadow:0 0 20px #fff;
+  background:#111;
+  border-radius:15px;
+  box-shadow:0 0 20px #0f0;
 }
 
 button{
   padding:10px 20px;
-  font-size:16px;
+  margin:10px;
   border:none;
-  border-radius:5px;
-  background:linear-gradient(45deg,#00c6ff,#0072ff);
+  border-radius:8px;
+  background:#00c853;
   color:white;
-}
-
-.controls{
-  margin-top:10px;
-}
-
-.ctrl{
-  display:inline-block;
-  padding:15px;
-  margin:5px;
-  background:rgba(255,255,255,0.3);
-  border-radius:10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🌈 Color Snake Game</h1>
+<h1>🐍 Real Snake Game</h1>
 <h2 id="score">Score: 0</h2>
-<h3 id="highScore">High Score: 0</h3>
 
 <button onclick="startGame()">Start Game</button>
 
 <canvas id="game" width="400" height="400"></canvas>
-
-<div class="controls">
-  <div class="ctrl" onclick="changeDir('LEFT')">⬅️</div>
-  <div class="ctrl" onclick="changeDir('UP')">⬆️</div>
-  <div class="ctrl" onclick="changeDir('DOWN')">⬇️</div>
-  <div class="ctrl" onclick="changeDir('RIGHT')">➡️</div>
-</div>
-
-<audio id="eatSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.wav"></audio>
-<audio id="gameOverSound" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.wav"></audio>
 
 <script>
 const canvas = document.getElementById("game");
@@ -74,20 +47,15 @@ const ctx = canvas.getContext("2d");
 
 let snake, food, dir, gameInterval;
 let score = 0;
-let speed = 150;
-
-let highScore = localStorage.getItem("snakeHigh") || 0;
-document.getElementById("highScore").innerText = "High Score: " + highScore;
 
 function startGame(){
   snake = [{x:200,y:200}];
   dir = "RIGHT";
   score = 0;
-  speed = 150;
   spawnFood();
 
   clearInterval(gameInterval);
-  gameInterval = setInterval(gameLoop, speed);
+  gameInterval = setInterval(gameLoop, 120);
 }
 
 function spawnFood(){
@@ -100,17 +68,10 @@ function spawnFood(){
 function gameLoop(){
   moveSnake();
   if(checkCollision()){
-    document.getElementById("gameOverSound").play();
-
-    if(score > highScore){
-      localStorage.setItem("snakeHigh", score);
-    }
-
     alert("Game Over! Score: " + score);
     clearInterval(gameInterval);
     return;
   }
-
   drawGame();
 }
 
@@ -126,12 +87,7 @@ function moveSnake(){
 
   if(head.x===food.x && head.y===food.y){
     score++;
-    document.getElementById("eatSound").play();
     spawnFood();
-
-    speed = Math.max(60, speed - 5);
-    clearInterval(gameInterval);
-    gameInterval = setInterval(gameLoop, speed);
   }else{
     snake.pop();
   }
@@ -156,25 +112,40 @@ function checkCollision(){
 }
 
 function drawGame(){
-  // background
-  let grd = ctx.createLinearGradient(0,0,400,400);
-  grd.addColorStop(0,"#000000");
-  grd.addColorStop(1,"#222222");
-  ctx.fillStyle = grd;
+  ctx.fillStyle = "#111";
   ctx.fillRect(0,0,400,400);
 
-  // snake (rainbow)
+  // DRAW SNAKE (REAL LOOK)
   snake.forEach((s,i)=>{
-    ctx.fillStyle = "hsl(" + (i*15) + ",100%,50%)";
-    ctx.fillRect(s.x,s.y,20,20);
+    let gradient = ctx.createRadialGradient(s.x+10,s.y+10,2,s.x+10,s.y+10,10);
+    gradient.addColorStop(0,"#66ff66");
+    gradient.addColorStop(1,"#006600");
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(s.x+10,s.y+10,10,0,Math.PI*2);
+    ctx.fill();
   });
 
-  // food (glow)
-  ctx.fillStyle = "yellow";
-  ctx.shadowBlur = 15;
-  ctx.shadowColor = "yellow";
-  ctx.fillRect(food.x,food.y,20,20);
-  ctx.shadowBlur = 0;
+  // HEAD EYES
+  let head = snake[0];
+  ctx.fillStyle="white";
+  ctx.beginPath();
+  ctx.arc(head.x+6,head.y+6,2,0,Math.PI*2);
+  ctx.arc(head.x+14,head.y+6,2,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle="black";
+  ctx.beginPath();
+  ctx.arc(head.x+6,head.y+6,1,0,Math.PI*2);
+  ctx.arc(head.x+14,head.y+6,1,0,Math.PI*2);
+  ctx.fill();
+
+  // FOOD
+  ctx.fillStyle="red";
+  ctx.beginPath();
+  ctx.arc(food.x+10,food.y+10,8,0,Math.PI*2);
+  ctx.fill();
 }
 
 document.addEventListener("keydown", e=>{
@@ -183,13 +154,6 @@ document.addEventListener("keydown", e=>{
   if(e.key==="ArrowUp" && dir!=="DOWN") dir="UP";
   if(e.key==="ArrowDown" && dir!=="UP") dir="DOWN";
 });
-
-function changeDir(d){
-  if(d==="LEFT" && dir!=="RIGHT") dir="LEFT";
-  if(d==="RIGHT" && dir!=="LEFT") dir="RIGHT";
-  if(d==="UP" && dir!=="DOWN") dir="UP";
-  if(d==="DOWN" && dir!=="UP") dir="DOWN";
-}
 </script>
 
 </body>
