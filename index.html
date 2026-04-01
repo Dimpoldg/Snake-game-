@@ -3,35 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snake Fixed</title>
+<title>Fullscreen Snake Game</title>
 
 <style>
 body{
   margin:0;
-  background:#111;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-  flex-direction:column;
-  color:white;
+  overflow:hidden;
+  background:#0f2027;
   font-family:Arial;
+  color:white;
+}
+
+#score{
+  position:absolute;
+  top:10px;
+  left:10px;
+  font-size:20px;
+  z-index:10;
 }
 
 canvas{
-  background:#000;
-  border:2px solid lime;
-}
-button{
-  padding:8px 15px;
-  margin-bottom:10px;
+  display:block;
 }
 </style>
 </head>
 
 <body>
 
-<button onclick="startGame()">Start</button>
 <div id="score">Score: 0</div>
 <canvas id="game"></canvas>
 
@@ -39,96 +37,142 @@ button{
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = 400;
-canvas.height = 400;
-
-let snake, food, dir, score, loop;
+let snake, food, dir, gameInterval;
+let score = 0;
 let box = 20;
+let speed = 180;
+
+// fullscreen resize
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
 
 function startGame(){
   snake = [{x:200,y:200}];
   dir = "RIGHT";
   score = 0;
-  spawn();
+  spawnFood();
 
-  clearInterval(loop);
-  loop = setInterval(update, 500);
+  clearInterval(gameInterval);
+  gameInterval = setInterval(gameLoop, speed);
 }
 
-function spawn(){
+startGame();
+
+function spawnFood(){
   food = {
-    x: Math.floor(Math.random()*20)*box,
-    y: Math.floor(Math.random()*20)*box
+    x: Math.floor(canvas.width/box * Math.random()) * box,
+    y: Math.floor(canvas.height/box * Math.random()) * box
   };
 }
 
-function update(){
+function gameLoop(){
+  moveSnake();
+  if(checkCollision()){
+    alert("Game Over! Score: " + score);
+    startGame();
+    return;
+  }
+  drawGame();
+}
+
+function moveSnake(){
   let head = {...snake[0]};
 
-  if(dir=="LEFT") head.x -= box;
-  if(dir=="RIGHT") head.x += box;
-  if(dir=="UP") head.y -= box;
-  if(dir=="DOWN") head.y += box;
+  if(dir==="LEFT") head.x -=box;
+  if(dir==="RIGHT") head.x +=box;
+  if(dir==="UP") head.y -=box;
+  if(dir==="DOWN") head.y +=box;
 
   snake.unshift(head);
 
-  if(head.x==food.x && head.y==food.y){
+  if(head.x===food.x && head.y===food.y){
     score++;
-    spawn();
+    spawnFood();
   }else{
     snake.pop();
   }
 
-  if(head.x<0 || head.y<0 || head.x>=400 || head.y>=400){
-    startGame();
-    return;
+  document.getElementById("score").innerText = "Score: " + score;
+}
+
+function checkCollision(){
+  let head = snake[0];
+
+  if(head.x<0 || head.y<0 || head.x>=canvas.width || head.y>=canvas.height){
+    return true;
   }
 
   for(let i=1;i<snake.length;i++){
-    if(head.x==snake[i].x && head.y==snake[i].y){
-      startGame();
-      return;
+    if(head.x===snake[i].x && head.y===snake[i].y){
+      return true;
     }
   }
 
-  draw();
-  document.getElementById("score").innerText = "Score: "+score;
+  return false;
 }
 
-function draw(){
-  ctx.fillStyle="#000";
-  ctx.fillRect(0,0,400,400);
+function drawGame(){
+  ctx.fillStyle="#111";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  ctx.fillStyle="lime";
-  snake.forEach(s=>{
-    ctx.fillRect(s.x,s.y,box,box);
+  // snake (real look)
+  snake.forEach((s,i)=>{
+    let gradient = ctx.createRadialGradient(s.x+10,s.y+10,2,s.x+10,s.y+10,10);
+    gradient.addColorStop(0,"#66ff66");
+    gradient.addColorStop(1,"#006600");
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(s.x+10,s.y+10,10,0,Math.PI*2);
+    ctx.fill();
   });
 
+  // eyes
+  let head = snake[0];
+  ctx.fillStyle="white";
+  ctx.beginPath();
+  ctx.arc(head.x+6,head.y+6,2,0,Math.PI*2);
+  ctx.arc(head.x+14,head.y+6,2,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle="black";
+  ctx.beginPath();
+  ctx.arc(head.x+6,head.y+6,1,0,Math.PI*2);
+  ctx.arc(head.x+14,head.y+6,1,0,Math.PI*2);
+  ctx.fill();
+
+  // food
   ctx.fillStyle="red";
-  ctx.fillRect(food.x,food.y,box,box);
+  ctx.beginPath();
+  ctx.arc(food.x+10,food.y+10,8,0,Math.PI*2);
+  ctx.fill();
 }
 
-/* ✅ SIMPLE TOUCH FIX */
+// TOUCH CONTROL
 canvas.addEventListener("touchstart", function(e){
-  let x = e.touches[0].clientX;
-  let y = e.touches[0].clientY;
+  let touch = e.touches[0];
+  let rect = canvas.getBoundingClientRect();
 
-  let w = window.innerWidth;
-  let h = window.innerHeight;
+  let touchX = touch.clientX - rect.left;
+  let touchY = touch.clientY - rect.top;
 
-  let dx = x - w/2;
-  let dy = y - h/2;
+  let head = snake[0];
+
+  let dx = touchX - (head.x+10);
+  let dy = touchY - (head.y+10);
 
   if(Math.abs(dx) > Math.abs(dy)){
-    if(dx > 0 && dir!="LEFT") dir="RIGHT";
-    else if(dx < 0 && dir!="RIGHT") dir="LEFT";
+    if(dx > 0 && dir!=="LEFT") dir="RIGHT";
+    else if(dx < 0 && dir!=="RIGHT") dir="LEFT";
   }else{
-    if(dy > 0 && dir!="UP") dir="DOWN";
-    else if(dy < 0 && dir!="DOWN") dir="UP";
+    if(dy > 0 && dir!=="UP") dir="DOWN";
+    else if(dy < 0 && dir!=="DOWN") dir="UP";
   }
-
-  e.preventDefault();
-}, {passive:false});
+});
 </script>
 
 </body>
