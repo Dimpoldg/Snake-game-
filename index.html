@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snake Touch Fix</title>
+<title>Snake Touch Fixed</title>
 
 <style>
 body{
@@ -22,7 +22,7 @@ canvas{
   background:#000;
   border:3px solid #00ff00;
   border-radius:10px;
-  touch-action:none; /* 🔥 IMPORTANT FIX */
+  touch-action:none;
 }
 
 button{
@@ -115,28 +115,32 @@ function draw(){
   ctx.fillRect(food.x,food.y,box,box);
 }
 
-/* 🔥 PERFECT TOUCH FIX (canvas only + swipe) */
-let startX, startY;
-
-canvas.addEventListener("touchstart", e=>{
+/* 🔥 GUARANTEED TOUCH FIX (NO SWIPE BUG) */
+canvas.addEventListener("touchstart", function(e){
   let t = e.touches[0];
-  startX = t.clientX;
-  startY = t.clientY;
-}, {passive:false});
 
-canvas.addEventListener("touchend", e=>{
-  let t = e.changedTouches[0];
-  let dx = t.clientX - startX;
-  let dy = t.clientY - startY;
+  let x = t.clientX;
+  let y = t.clientY;
 
-  if(Math.abs(dx) > Math.abs(dy)){
-    if(dx > 0 && dir!="LEFT") dir="RIGHT";
-    else if(dx < 0 && dir!="RIGHT") dir="LEFT";
-  }else{
-    if(dy > 0 && dir!="UP") dir="DOWN";
-    else if(dy < 0 && dir!="DOWN") dir="UP";
+  let w = window.innerWidth;
+  let h = window.innerHeight;
+
+  // screen divide into zones
+  if(x < w/2 && Math.abs(x-w/2) > Math.abs(y-h/2)){
+    if(dir!="RIGHT") dir="LEFT";
   }
-});
+  else if(x >= w/2 && Math.abs(x-w/2) > Math.abs(y-h/2)){
+    if(dir!="LEFT") dir="RIGHT";
+  }
+  else if(y < h/2){
+    if(dir!="DOWN") dir="UP";
+  }
+  else{
+    if(dir!="UP") dir="DOWN";
+  }
+
+  e.preventDefault();
+}, {passive:false});
 </script>
 
 </body>
