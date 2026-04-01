@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pro Snake Game</title>
+
+<style>
+body{
+  background:#111;
+  color:white;
+  text-align:center;
+  font-family:Arial;
+}
+
+canvas{
+  background:black;
+  display:block;
+  margin:auto;
+  border:3px solid #0f0;
+}
+
+button{
+  padding:10px 20px;
+  margin:10px;
+  font-size:16px;
+}
+
+.controls{
+  margin-top:10px;
+}
+
+.ctrl{
+  padding:15px;
+  margin:5px;
+  background:#333;
+  display:inline-block;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🐍 Pro Snake Game</h1>
+<h2 id="score">Score: 0</h2>
+<h3 id="highScore">High Score: 0</h3>
+
+<button onclick="startGame()">Start Game</button>
+
+<canvas id="game" width="400" height="400"></canvas>
+
+<div class="controls">
+  <div class="ctrl" onclick="changeDir('LEFT')">⬅️</div>
+  <div class="ctrl" onclick="changeDir('UP')">⬆️</div>
+  <div class="ctrl" onclick="changeDir('DOWN')">⬇️</div>
+  <div class="ctrl" onclick="changeDir('RIGHT')">➡️</div>
+</div>
+
+<!-- Sounds -->
+<audio id="eatSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-jump-arcade-game-239.wav"></audio>
+<audio id="gameOverSound" src="https://assets.mixkit.co/sfx/preview/mixkit-player-losing-or-failing-2042.wav"></audio>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let snake, food, dir, gameInterval;
+let score = 0;
+let speed = 150;
+
+let highScore = localStorage.getItem("snakeHigh") || 0;
+document.getElementById("highScore").innerText = "High Score: " + highScore;
+
+function startGame(){
+  snake = [{x:200,y:200}];
+  dir = "RIGHT";
+  score = 0;
+  speed = 150;
+  spawnFood();
+
+  clearInterval(gameInterval);
+  gameInterval = setInterval(gameLoop, speed);
+}
+
+function spawnFood(){
+  food = {
+    x: Math.floor(Math.random()*20)*20,
+    y: Math.floor(Math.random()*20)*20
+  };
+}
+
+function gameLoop(){
+  moveSnake();
+  if(checkCollision()){
+    document.getElementById("gameOverSound").play();
+
+    if(score > highScore){
+      localStorage.setItem("snakeHigh", score);
+    }
+
+    alert("Game Over! Score: " + score);
+    clearInterval(gameInterval);
+    return;
+  }
+
+  drawGame();
+}
+
+function moveSnake(){
+  let head = {...snake[0]};
+
+  if(dir==="LEFT") head.x -=20;
+  if(dir==="RIGHT") head.x +=20;
+  if(dir==="UP") head.y -=20;
+  if(dir==="DOWN") head.y +=20;
+
+  snake.unshift(head);
+
+  // Eat food
+  if(head.x===food.x && head.y===food.y){
+    score++;
+    document.getElementById("eatSound").play();
+    spawnFood();
+
+    // speed increase
+    speed = Math.max(50, speed - 5);
+    clearInterval(gameInterval);
+    gameInterval = setInterval(gameLoop, speed);
+  }else{
+    snake.pop();
+  }
+
+  document.getElementById("score").innerText = "Score: " + score;
+}
+
+function checkCollision(){
+  let head = snake[0];
+
+  // Wall
+  if(head.x<0 || head.y<0 || head.x>=400 || head.y>=400){
+    return true;
+  }
+
+  // Self
+  for(let i=1;i<snake.length;i++){
+    if(head.x===snake[i].x && head.y===snake[i].y){
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function drawGame(){
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,400,400);
+
+  // Snake
+  ctx.fillStyle = "lime";
+  snake.forEach(s=>{
+    ctx.fillRect(s.x,s.y,20,20);
+  });
+
+  // Food
+  ctx.fillStyle = "red";
+  ctx.fillRect(food.x,food.y,20,20);
+}
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowLeft" && dir!=="RIGHT") dir="LEFT";
+  if(e.key==="ArrowRight" && dir!=="LEFT") dir="RIGHT";
+  if(e.key==="ArrowUp" && dir!=="DOWN") dir="UP";
+  if(e.key==="ArrowDown" && dir!=="UP") dir="DOWN";
+});
+
+function changeDir(d){
+  if(d==="LEFT" && dir!=="RIGHT") dir="LEFT";
+  if(d==="RIGHT" && dir!=="LEFT") dir="RIGHT";
+  if(d==="UP" && dir!=="DOWN") dir="UP";
+  if(d==="DOWN" && dir!=="UP") dir="DOWN";
+}
+</script>
+
+</body>
+</html>
