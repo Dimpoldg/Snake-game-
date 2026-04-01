@@ -2,15 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Real Snake Game</title>
+<title>Touch Snake Game</title>
 
 <style>
 body{
   margin:0;
-  font-family:Arial;
   text-align:center;
-  background:linear-gradient(135deg,#0f2027,#2c5364);
+  background:#0f2027;
   color:white;
+  font-family:Arial;
 }
 
 canvas{
@@ -18,25 +18,14 @@ canvas{
   margin:auto;
   background:#111;
   border-radius:15px;
-  box-shadow:0 0 20px #0f0;
-}
-
-button{
-  padding:10px 20px;
-  margin:10px;
-  border:none;
-  border-radius:8px;
-  background:#00c853;
-  color:white;
+  touch-action:none;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🐍 Real Snake Game</h1>
 <h2 id="score">Score: 0</h2>
-
 <button onclick="startGame()">Start Game</button>
 
 <canvas id="game" width="400" height="400"></canvas>
@@ -112,47 +101,45 @@ function checkCollision(){
 }
 
 function drawGame(){
-  ctx.fillStyle = "#111";
+  ctx.fillStyle="#111";
   ctx.fillRect(0,0,400,400);
 
-  // DRAW SNAKE (REAL LOOK)
+  // snake
   snake.forEach((s,i)=>{
-    let gradient = ctx.createRadialGradient(s.x+10,s.y+10,2,s.x+10,s.y+10,10);
-    gradient.addColorStop(0,"#66ff66");
-    gradient.addColorStop(1,"#006600");
-
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = "lime";
     ctx.beginPath();
     ctx.arc(s.x+10,s.y+10,10,0,Math.PI*2);
     ctx.fill();
   });
 
-  // HEAD EYES
-  let head = snake[0];
-  ctx.fillStyle="white";
-  ctx.beginPath();
-  ctx.arc(head.x+6,head.y+6,2,0,Math.PI*2);
-  ctx.arc(head.x+14,head.y+6,2,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle="black";
-  ctx.beginPath();
-  ctx.arc(head.x+6,head.y+6,1,0,Math.PI*2);
-  ctx.arc(head.x+14,head.y+6,1,0,Math.PI*2);
-  ctx.fill();
-
-  // FOOD
+  // food
   ctx.fillStyle="red";
   ctx.beginPath();
   ctx.arc(food.x+10,food.y+10,8,0,Math.PI*2);
   ctx.fill();
 }
 
-document.addEventListener("keydown", e=>{
-  if(e.key==="ArrowLeft" && dir!=="RIGHT") dir="LEFT";
-  if(e.key==="ArrowRight" && dir!=="LEFT") dir="RIGHT";
-  if(e.key==="ArrowUp" && dir!=="DOWN") dir="UP";
-  if(e.key==="ArrowDown" && dir!=="UP") dir="DOWN";
+// 🔥 TOUCH CONTROL
+canvas.addEventListener("touchstart", function(e){
+  let touch = e.touches[0];
+  let rect = canvas.getBoundingClientRect();
+
+  let touchX = touch.clientX - rect.left;
+  let touchY = touch.clientY - rect.top;
+
+  let head = snake[0];
+
+  // decide direction based on touch position
+  let dx = touchX - (head.x+10);
+  let dy = touchY - (head.y+10);
+
+  if(Math.abs(dx) > Math.abs(dy)){
+    if(dx > 0 && dir!=="LEFT") dir="RIGHT";
+    else if(dx < 0 && dir!=="RIGHT") dir="LEFT";
+  }else{
+    if(dy > 0 && dir!=="UP") dir="DOWN";
+    else if(dy < 0 && dir!=="DOWN") dir="UP";
+  }
 });
 </script>
 
