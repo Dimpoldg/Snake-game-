@@ -3,43 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snake Touch Fixed</title>
+<title>Snake Fixed</title>
 
 <style>
 body{
   margin:0;
   background:#111;
-  font-family:Arial;
   display:flex;
   justify-content:center;
   align-items:center;
   height:100vh;
   flex-direction:column;
   color:white;
+  font-family:Arial;
 }
 
 canvas{
   background:#000;
-  border:3px solid #00ff00;
-  border-radius:10px;
-  touch-action:none;
+  border:2px solid lime;
 }
-
 button{
   padding:8px 15px;
   margin-bottom:10px;
-  background:#00ff00;
-  border:none;
-  border-radius:5px;
 }
 </style>
 </head>
 
 <body>
 
-<button onclick="startGame()">Start Game</button>
+<button onclick="startGame()">Start</button>
 <div id="score">Score: 0</div>
-
 <canvas id="game"></canvas>
 
 <script>
@@ -49,20 +42,20 @@ const ctx = canvas.getContext("2d");
 canvas.width = 400;
 canvas.height = 400;
 
-let snake, food, dir, score, gameLoop;
+let snake, food, dir, score, loop;
 let box = 20;
 
 function startGame(){
   snake = [{x:200,y:200}];
   dir = "RIGHT";
   score = 0;
-  spawnFood();
+  spawn();
 
-  clearInterval(gameLoop);
-  gameLoop = setInterval(update, 500);
+  clearInterval(loop);
+  loop = setInterval(update, 500);
 }
 
-function spawnFood(){
+function spawn(){
   food = {
     x: Math.floor(Math.random()*20)*box,
     y: Math.floor(Math.random()*20)*box
@@ -81,7 +74,7 @@ function update(){
 
   if(head.x==food.x && head.y==food.y){
     score++;
-    spawnFood();
+    spawn();
   }else{
     snake.pop();
   }
@@ -99,7 +92,7 @@ function update(){
   }
 
   draw();
-  document.getElementById("score").innerText = "Score: " + score;
+  document.getElementById("score").innerText = "Score: "+score;
 }
 
 function draw(){
@@ -115,28 +108,23 @@ function draw(){
   ctx.fillRect(food.x,food.y,box,box);
 }
 
-/* 🔥 GUARANTEED TOUCH FIX (NO SWIPE BUG) */
+/* ✅ SIMPLE TOUCH FIX */
 canvas.addEventListener("touchstart", function(e){
-  let t = e.touches[0];
-
-  let x = t.clientX;
-  let y = t.clientY;
+  let x = e.touches[0].clientX;
+  let y = e.touches[0].clientY;
 
   let w = window.innerWidth;
   let h = window.innerHeight;
 
-  // screen divide into zones
-  if(x < w/2 && Math.abs(x-w/2) > Math.abs(y-h/2)){
-    if(dir!="RIGHT") dir="LEFT";
-  }
-  else if(x >= w/2 && Math.abs(x-w/2) > Math.abs(y-h/2)){
-    if(dir!="LEFT") dir="RIGHT";
-  }
-  else if(y < h/2){
-    if(dir!="DOWN") dir="UP";
-  }
-  else{
-    if(dir!="UP") dir="DOWN";
+  let dx = x - w/2;
+  let dy = y - h/2;
+
+  if(Math.abs(dx) > Math.abs(dy)){
+    if(dx > 0 && dir!="LEFT") dir="RIGHT";
+    else if(dx < 0 && dir!="RIGHT") dir="LEFT";
+  }else{
+    if(dy > 0 && dir!="UP") dir="DOWN";
+    else if(dy < 0 && dir!="DOWN") dir="UP";
   }
 
   e.preventDefault();
