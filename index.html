@@ -39,7 +39,7 @@ let score = 0;
 
 // 🐍 PNG HEAD IMAGE
 let snakeImg = new Image();
-snakeImg.src = "snake-head.png"; // ⚠️ agar folder me hai to "images/snake-head.png"
+snakeImg.src = "snake-head.png"; // 
 
 function startGame(){
   snake = [{x:200,y:200}];
@@ -48,7 +48,7 @@ function startGame(){
   spawnFood();
 
   clearInterval(gameInterval);
-  gameInterval = setInterval(gameLoop, 200);
+  gameInterval = setInterval(gameLoop, 300);
 }
 
 function spawnFood(){
