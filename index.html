@@ -37,6 +37,10 @@ const ctx = canvas.getContext("2d");
 let snake, food, dir, gameInterval;
 let score = 0;
 
+// 🐍 PNG HEAD IMAGE
+let snakeImg = new Image();
+snakeImg.src = "snake-head.png"; // ⚠️ agar folder me hai to "images/snake-head.png"
+
 function startGame(){
   snake = [{x:200,y:200}];
   dir = "RIGHT";
@@ -44,7 +48,7 @@ function startGame(){
   spawnFood();
 
   clearInterval(gameInterval);
-  gameInterval = setInterval(gameLoop, 500);
+  gameInterval = setInterval(gameLoop, 200);
 }
 
 function spawnFood(){
@@ -104,22 +108,39 @@ function drawGame(){
   ctx.fillStyle="#111";
   ctx.fillRect(0,0,400,400);
 
-  // snake
-  snake.forEach((s,i)=>{
-    ctx.fillStyle = "lime";
-    ctx.beginPath();
-    ctx.arc(s.x+10,s.y+10,10,0,Math.PI*2);
-    ctx.fill();
-  });
-
-  // food
+  // 🍎 FOOD
   ctx.fillStyle="red";
   ctx.beginPath();
   ctx.arc(food.x+10,food.y+10,8,0,Math.PI*2);
   ctx.fill();
+
+  // 🐍 SNAKE
+  snake.forEach((s,i)=>{
+    let size = 20;
+
+    if(i === 0){
+      // HEAD (PNG with direction)
+      ctx.save();
+      ctx.translate(s.x + size/2, s.y + size/2);
+
+      if(dir==="RIGHT") ctx.rotate(0);
+      if(dir==="DOWN") ctx.rotate(Math.PI/2);
+      if(dir==="LEFT") ctx.rotate(Math.PI);
+      if(dir==="UP") ctx.rotate(-Math.PI/2);
+
+      ctx.drawImage(snakeImg, -size/2, -size/2, size, size);
+      ctx.restore();
+    }else{
+      // BODY (simple circles)
+      ctx.fillStyle="lime";
+      ctx.beginPath();
+      ctx.arc(s.x+10,s.y+10,10,0,Math.PI*2);
+      ctx.fill();
+    }
+  });
 }
 
-// 🔥 TOUCH CONTROL
+// 🎮 TOUCH CONTROL
 canvas.addEventListener("touchstart", function(e){
   let touch = e.touches[0];
   let rect = canvas.getBoundingClientRect();
@@ -129,7 +150,6 @@ canvas.addEventListener("touchstart", function(e){
 
   let head = snake[0];
 
-  // decide direction based on touch position
   let dx = touchX - (head.x+10);
   let dy = touchY - (head.y+10);
 
